@@ -28,6 +28,11 @@ func JWTValidation(skipper echo_mw.Skipper, closeChan <-chan struct{}, url strin
 	j := jwks.New()
 	j.Schedule(url, 5*time.Minute)
 
+	go func() {
+		<-closeChan
+		j.Cancel()
+	}()
+
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			rawToken, err := extractTokenFromHeader(c.Request())
@@ -40,7 +45,7 @@ func JWTValidation(skipper echo_mw.Skipper, closeChan <-chan struct{}, url strin
 			}
 
 			if token.Valid {
-				next(c)
+				return next(c)
 			}
 			return fmt.Errorf("invalid Authorization")
 		}
