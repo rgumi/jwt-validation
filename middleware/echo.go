@@ -7,7 +7,7 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt"
-	"github.com/rgumi/jwt-validation/jwks"
+	"github.com/ron96G/jwt-validation/jwks"
 
 	"github.com/labstack/echo"
 	echo_mw "github.com/labstack/echo/v4/middleware"

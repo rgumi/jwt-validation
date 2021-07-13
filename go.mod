@@ -1,4 +1,4 @@
-module github.com/rgumi/jwt-validation
+module github.com/ron96G/jwt-validation
 
 go 1.16
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	jwks "github.com/rgumi/jwt-validation/jwks"
+	jwks "github.com/ron96G/jwt-validation/jwks"
 
 	jwt "github.com/golang-jwt/jwt"
 )
