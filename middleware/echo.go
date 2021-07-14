@@ -37,7 +37,7 @@ func JWTValidation(skipper echo_mw.Skipper, closeChan <-chan struct{}, url strin
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			if skipper(c) {
+			if skipper != nil && skipper(c) {
 				return next(c)
 			}
 			c.Logger().Info("Extracting token from header")
