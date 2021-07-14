@@ -18,12 +18,9 @@ func extractTokenFromHeader(req *http.Request) (token string, err error) {
 	scheme := "Bearer "
 	token = req.Header.Get("Authorization")
 
-	fmt.Println("Checking prefix")
 	if strings.HasPrefix(token, scheme) {
-		fmt.Println("Returning token")
 		return token[len(scheme):], nil
 	}
-	fmt.Println("Returning error")
 	return "", fmt.Errorf("malformed or missing Authorization header")
 }
 
@@ -46,13 +43,12 @@ func JWTValidation(skipper echo_mw.Skipper, closeChan <-chan struct{}, url strin
 			c.Logger().Info("Extracting token from header")
 			rawToken, err := extractTokenFromHeader(c.Request())
 			if err != nil {
-				fmt.Println("Returning error")
-				return fmt.Errorf("%s: invalid Authorization", err)
+				return fmt.Errorf("%s: invalid Authorization", err.Error())
 			}
 			c.Logger().Info("Parsing token")
 			token, err := jwt.Parse(rawToken, j.KeyFunc)
 			if err != nil {
-				return fmt.Errorf("%s: invalid Authorization", err)
+				return fmt.Errorf("%s: invalid Authorization", err.Error())
 			}
 
 			if token.Valid {
