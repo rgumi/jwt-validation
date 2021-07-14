@@ -28,22 +28,20 @@ func (j *JWKS) KeyFunc(token *jwt.Token) (interface{}, error) {
 }
 
 func (j *JWKS) getKey(key string) (jwk JWK, err error) {
-	refreshed := false
 	var ok bool
-get:
+	err = fmt.Errorf("unable to find key '%s' in JWKS", key)
+
 	jwk, ok = j.Keys[key]
 	if !ok {
-		if !j.refreshUnknown || refreshed {
-			err = fmt.Errorf("unable to find key '%s' in JWKS", key)
-			return
+		if !j.refreshUnknown {
+			return jwk, err
 		}
 
-		if err = j.refresh(j.ctx); err != nil {
-			return
+		j.refresh()
+		jwk, ok = j.Keys[key]
+		if !ok {
+			return jwk, err
 		}
-		refreshed = true
-		goto get
 	}
-
-	return
+	return jwk, nil
 }

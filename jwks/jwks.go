@@ -61,26 +61,30 @@ type JWKS struct {
 	Log            *logrus.Entry
 	close          chan (struct{})
 	mutex          sync.RWMutex
+	once           sync.Once
 	ctx            context.Context
 	cancel         context.CancelFunc
 	refreshUnknown bool
 	httpClient     *http.Client
 	maxRetries     int
 	retryTimeout   time.Duration
+	refreshRequest chan (struct{})
 }
 
 func New() *JWKS {
 	ctx, cancel := context.WithCancel(context.Background())
 	j := &JWKS{
-		Keys:         map[string]JWK{},
-		URL:          &url.URL{},
-		mutex:        sync.RWMutex{},
-		ctx:          ctx,
-		cancel:       cancel,
-		close:        make(chan struct{}, 1),
-		httpClient:   defaultHttpClient,
-		maxRetries:   defaultMaxRetries,
-		retryTimeout: defaultRetryTimeout,
+		Keys:           map[string]JWK{},
+		URL:            &url.URL{},
+		mutex:          sync.RWMutex{},
+		once:           sync.Once{},
+		ctx:            ctx,
+		cancel:         cancel,
+		close:          make(chan struct{}, 1),
+		httpClient:     defaultHttpClient,
+		maxRetries:     defaultMaxRetries,
+		retryTimeout:   defaultRetryTimeout,
+		refreshRequest: make(chan struct{}),
 	}
 
 	j.Log = logrus.StandardLogger().WithField("app", "jwks")

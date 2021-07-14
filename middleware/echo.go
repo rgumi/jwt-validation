@@ -8,8 +8,9 @@ import (
 
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/ron96G/jwt-validation/jwks"
+	"github.com/sirupsen/logrus"
 
-	"github.com/labstack/echo"
+	echo "github.com/labstack/echo/v4"
 	echo_mw "github.com/labstack/echo/v4/middleware"
 )
 
@@ -27,6 +28,7 @@ func JWTValidation(skipper echo_mw.Skipper, closeChan <-chan struct{}, url strin
 
 	j := jwks.New()
 	j.Schedule(url, 5*time.Minute)
+	j.Log.Logger.SetLevel(logrus.DebugLevel)
 
 	go func() {
 		<-closeChan
@@ -35,6 +37,10 @@ func JWTValidation(skipper echo_mw.Skipper, closeChan <-chan struct{}, url strin
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			if skipper(c) {
+				return next(c)
+			}
+
 			rawToken, err := extractTokenFromHeader(c.Request())
 			if err != nil {
 				return fmt.Errorf("%w: invalid Authorization", err)
