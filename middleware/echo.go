@@ -18,7 +18,9 @@ func extractTokenFromHeader(req *http.Request) (token string, err error) {
 	scheme := "Bearer "
 	token = req.Header.Get("Authorization")
 
+	fmt.Println("Checking prefix")
 	if strings.HasPrefix(token, scheme) {
+		fmt.Println("Returning token")
 		return token[len(scheme):], nil
 	}
 	return "", fmt.Errorf("malformed or missing Authorization header")
