@@ -2,11 +2,45 @@ package jwks
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
+	"net"
+	"net/http"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
+)
+
+var (
+	defaultMaxRetries   = 3
+	defaultRetryTimeout = 500 * time.Millisecond
+	defaultTransport    = &http.Transport{
+		Proxy: nil,
+		DialContext: (&net.Dialer{
+			Timeout:   3 * time.Second,
+			KeepAlive: 15 * time.Second,
+		}).DialContext,
+		MaxIdleConnsPerHost:   5,
+		MaxConnsPerHost:       5,
+		MaxIdleConns:          10,
+		IdleConnTimeout:       30 * time.Second,
+		ResponseHeaderTimeout: 2 * time.Second,
+		TLSHandshakeTimeout:   1 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: false,
+		},
+		ForceAttemptHTTP2:  false,
+		DisableCompression: true,
+		DisableKeepAlives:  false,
+	}
+
+	defaultHttpClient = &http.Client{
+		Transport: defaultTransport,
+		Timeout:   5 * time.Second,
+	}
 )
 
 type JWK struct {
@@ -30,17 +64,23 @@ type JWKS struct {
 	ctx            context.Context
 	cancel         context.CancelFunc
 	refreshUnknown bool
+	httpClient     *http.Client
+	maxRetries     int
+	retryTimeout   time.Duration
 }
 
 func New() *JWKS {
 	ctx, cancel := context.WithCancel(context.Background())
 	j := &JWKS{
-		Keys:   map[string]JWK{},
-		URL:    &url.URL{},
-		mutex:  sync.RWMutex{},
-		ctx:    ctx,
-		cancel: cancel,
-		close:  make(chan struct{}, 1),
+		Keys:         map[string]JWK{},
+		URL:          &url.URL{},
+		mutex:        sync.RWMutex{},
+		ctx:          ctx,
+		cancel:       cancel,
+		close:        make(chan struct{}, 1),
+		httpClient:   defaultHttpClient,
+		maxRetries:   defaultMaxRetries,
+		retryTimeout: defaultRetryTimeout,
 	}
 
 	j.Log = logrus.StandardLogger().WithField("app", "jwks")
@@ -67,4 +107,16 @@ func (j *JWKS) Unmarshal(data []byte) error {
 		j.Keys[key.Kid] = key
 	}
 	return nil
+}
+
+func (j *JWKS) SetHttpClient(client *http.Client) {
+	j.httpClient = client
+}
+
+func (j *JWKS) SetMaxRetries(maxRetries int) {
+	j.maxRetries = maxRetries
+}
+
+func (j *JWKS) SetRetryTimeout(retryTimeout time.Duration) {
+	j.retryTimeout = retryTimeout
 }

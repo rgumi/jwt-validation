@@ -10,12 +10,6 @@ import (
 	"time"
 )
 
-var (
-	httpClient   = http.DefaultClient
-	retryTimeout = 500 * time.Millisecond
-	maxRetries   = 3
-)
-
 func (j *JWKS) Schedule(rawURL string, refreshTimeout time.Duration) (err error) {
 
 	j.URL, err = url.Parse(rawURL)
@@ -57,14 +51,14 @@ func (j *JWKS) refresh(ctx context.Context) error {
 	}
 
 start:
-	resp, err := httpClient.Do(req)
+	resp, err := j.httpClient.Do(req)
 	if err != nil {
 		j.Log.Warnf("%s: failed to refresh JWKS", err.Error())
 		// retry
-		if retries >= maxRetries {
+		if retries >= j.maxRetries {
 			return fmt.Errorf("%s: %s: failed to refresh JWKS", errors.New("reached maxRetries"), err)
 		}
-		time.Sleep(retryTimeout)
+		time.Sleep(j.retryTimeout)
 		retries++
 		goto start
 	}
