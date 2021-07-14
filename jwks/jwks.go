@@ -43,6 +43,26 @@ var (
 	}
 )
 
+type (
+	// Logger defines the logging interface.
+	Logger interface {
+		Print(i ...interface{})
+		Printf(format string, args ...interface{})
+		Debug(i ...interface{})
+		Debugf(format string, args ...interface{})
+		Info(i ...interface{})
+		Infof(format string, args ...interface{})
+		Warn(i ...interface{})
+		Warnf(format string, args ...interface{})
+		Error(i ...interface{})
+		Errorf(format string, args ...interface{})
+		Fatal(i ...interface{})
+		Fatalf(format string, args ...interface{})
+		Panic(i ...interface{})
+		Panicf(format string, args ...interface{})
+	}
+)
+
 type JWK struct {
 	Kid         string   `json:"kid"`
 	Kty         string   `json:"kty"`
@@ -58,7 +78,7 @@ type JWK struct {
 type JWKS struct {
 	Keys           map[string]JWK
 	URL            *url.URL
-	Log            *logrus.Entry
+	Log            Logger
 	close          chan (struct{})
 	mutex          sync.RWMutex
 	once           sync.Once
@@ -111,6 +131,10 @@ func (j *JWKS) Unmarshal(data []byte) error {
 		j.Keys[key.Kid] = key
 	}
 	return nil
+}
+
+func (j *JWKS) SetLogger(logger Logger) {
+	j.Log = logger
 }
 
 func (j *JWKS) SetHttpClient(client *http.Client) {

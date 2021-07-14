@@ -8,7 +8,6 @@ import (
 
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/ron96G/jwt-validation/jwks"
-	"github.com/sirupsen/logrus"
 
 	echo "github.com/labstack/echo/v4"
 	echo_mw "github.com/labstack/echo/v4/middleware"
@@ -24,11 +23,20 @@ func extractTokenFromHeader(req *http.Request) (token string, err error) {
 	return "", fmt.Errorf("malformed or missing Authorization header")
 }
 
-func JWTValidation(skipper echo_mw.Skipper, closeChan <-chan struct{}, url string) echo.MiddlewareFunc {
+func handleError(c echo.Context, statusCode int, err error) error {
+	resp := c.Response()
+
+	resp.Header().Set("Content-Type", "application/json")
+	resp.WriteHeader(statusCode)
+	resp.Write([]byte("{" + "\"message\":\"" + err.Error() + "\"}"))
+	return nil
+}
+
+func JWTValidation(skipper echo_mw.Skipper, logger jwks.Logger, closeChan <-chan struct{}, url string) echo.MiddlewareFunc {
 
 	j := jwks.New()
+	j.SetLogger(logger)
 	j.Schedule(url, 5*time.Minute)
-	j.Log.Logger.SetLevel(logrus.DebugLevel)
 
 	go func() {
 		<-closeChan
@@ -43,18 +51,18 @@ func JWTValidation(skipper echo_mw.Skipper, closeChan <-chan struct{}, url strin
 			c.Logger().Info("Extracting token from header")
 			rawToken, err := extractTokenFromHeader(c.Request())
 			if err != nil {
-				return fmt.Errorf("%s: invalid Authorization", err.Error())
+				return handleError(c, 401, fmt.Errorf("%s: invalid Authorization", err.Error()))
 			}
 			c.Logger().Info("Parsing token")
 			token, err := jwt.Parse(rawToken, j.KeyFunc)
 			if err != nil {
-				return fmt.Errorf("%s: invalid Authorization", err.Error())
+				return handleError(c, 403, fmt.Errorf("%s: invalid Authorization", err.Error()))
 			}
 
 			if token.Valid {
 				return next(c)
 			}
-			return fmt.Errorf("invalid Authorization")
+			return handleError(c, 403, fmt.Errorf("invalid Authorization"))
 		}
 	}
 }
