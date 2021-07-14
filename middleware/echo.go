@@ -48,15 +48,15 @@ func JWTValidation(skipper echo_mw.Skipper, logger jwks.Logger, closeChan <-chan
 			if skipper != nil && skipper(c) {
 				return next(c)
 			}
-			c.Logger().Info("Extracting token from header")
+
 			rawToken, err := extractTokenFromHeader(c.Request())
 			if err != nil {
-				return handleError(c, 401, fmt.Errorf("%s: invalid Authorization", err.Error()))
+				return handleError(c, 401, fmt.Errorf("%w: invalid Authorization", err))
 			}
-			c.Logger().Info("Parsing token")
+
 			token, err := jwt.Parse(rawToken, j.KeyFunc)
 			if err != nil {
-				return handleError(c, 403, fmt.Errorf("%s: invalid Authorization", err.Error()))
+				return handleError(c, 403, fmt.Errorf("%w: invalid Authorization", err))
 			}
 
 			if token.Valid {

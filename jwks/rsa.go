@@ -3,6 +3,7 @@ package jwks
 import (
 	"crypto/rsa"
 	"encoding/base64"
+	"fmt"
 	"math/big"
 )
 
@@ -13,6 +14,10 @@ func (j JWK) RSA() (publicKey *rsa.PublicKey, err error) {
 		if publicKey, ok = j.precomputed.(*rsa.PublicKey); ok {
 			return publicKey, nil
 		}
+	}
+
+	if j.E == "" || j.N == "" {
+		return nil, fmt.Errorf("missing required headers E or N")
 	}
 
 	var exponent []byte

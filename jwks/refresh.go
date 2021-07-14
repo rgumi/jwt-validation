@@ -23,7 +23,6 @@ func (j *JWKS) Schedule(rawURL string, refreshTimeout time.Duration) (err error)
 	go func() {
 
 		// get it once before starting the scheduled job
-		j.Refresh()
 
 		for {
 			select {
@@ -41,6 +40,7 @@ func (j *JWKS) Schedule(rawURL string, refreshTimeout time.Duration) (err error)
 		}
 	}()
 
+	j.Refresh()
 	return
 }
 

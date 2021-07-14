@@ -21,7 +21,8 @@ func (j *JWKS) KeyFunc(token *jwt.Token) (interface{}, error) {
 	defer j.mutex.RUnlock()
 	key, err := j.getKey(kid)
 	if err != nil {
-		return nil, fmt.Errorf("%w: could not find kid in JWKS", err)
+		j.Log.Warn(err)
+		return nil, fmt.Errorf("could not find kid in JWKS")
 	}
 
 	return key.RSA()

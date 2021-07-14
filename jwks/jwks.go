@@ -104,7 +104,8 @@ func New() *JWKS {
 		httpClient:     defaultHttpClient,
 		maxRetries:     defaultMaxRetries,
 		retryTimeout:   defaultRetryTimeout,
-		refreshRequest: make(chan struct{}),
+		refreshRequest: make(chan struct{}, 1),
+		refreshUnknown: true,
 	}
 
 	j.Log = logrus.StandardLogger().WithField("app", "jwks")
