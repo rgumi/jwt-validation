@@ -46,6 +46,7 @@ func JWTValidation(skipper echo_mw.Skipper, closeChan <-chan struct{}, url strin
 			c.Logger().Info("Extracting token from header")
 			rawToken, err := extractTokenFromHeader(c.Request())
 			if err != nil {
+				fmt.Println("Returning error")
 				return fmt.Errorf("%s: invalid Authorization", err)
 			}
 			c.Logger().Info("Parsing token")
