@@ -23,6 +23,7 @@ func extractTokenFromHeader(req *http.Request) (token string, err error) {
 		fmt.Println("Returning token")
 		return token[len(scheme):], nil
 	}
+	fmt.Println("Returning error")
 	return "", fmt.Errorf("malformed or missing Authorization header")
 }
 
